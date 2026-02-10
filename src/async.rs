@@ -1,5 +1,71 @@
-//! Async API (requires the `async` feature).
-
+//! Async driver implementation for the BH1750 ambient light sensor.
+//!
+//! This module provides the [`Bh1750Async`] driver for asynchronous I2C
+//! communication using the `embedded-hal-async` traits. This is useful
+//! for non-blocking applications in async embedded environments.
+//!
+//! This module requires the `async` feature to be enabled:
+//!
+//! ```toml
+//! [dependencies]
+//! bh1750-embedded = { version = "0.1", features = ["async"] }
+//! ```
+//!
+//! The async driver provides the same API as the blocking driver, but all
+//! I2C operations and delays are asynchronous.
+//!
+//! # Example: One-time Measurement
+//!
+//! ```
+//! # #[cfg(feature = "async")]
+//! # async fn example_async() {
+//! use bh1750_embedded::{Address, Resolution};
+//! use bh1750_embedded::r#async::Bh1750Async;
+//!
+//! # async fn inner<I2C, D, E>(i2c: I2C, delay: D) -> Result<(), bh1750_embedded::Error<E>>
+//! # where
+//! #     I2C: embedded_hal_async::i2c::I2c<Error = E>,
+//! #     D: embedded_hal_async::delay::DelayNs,
+//! #     E: embedded_hal::i2c::Error,
+//! # {
+//! let mut sensor = Bh1750Async::new(i2c, delay, Address::Low);
+//!
+//! // Asynchronously wait for measurement to complete
+//! let lux = sensor.one_time_measurement(Resolution::High).await?;
+//! # Ok(())
+//! # }
+//! # }
+//! ```
+//!
+//! # Example: Continuous Measurement with Async
+//!
+//! ```
+//! # #[cfg(feature = "async")]
+//! # async fn example_async() {
+//! use bh1750_embedded::{Address, Resolution};
+//! use bh1750_embedded::r#async::Bh1750Async;
+//!
+//! # async fn inner<I2C, D, E>(i2c: I2C, delay: D) -> Result<(), bh1750_embedded::Error<E>>
+//! # where
+//! #     I2C: embedded_hal_async::i2c::I2c<Error = E>,
+//! #     D: embedded_hal_async::delay::DelayNs,
+//! #     E: embedded_hal::i2c::Error,
+//! # {
+//! let mut sensor = Bh1750Async::new(i2c, delay, Address::Low);
+//!
+//! // Start continuous mode (note: async methods borrow the sensor)
+//! sensor.start_continuous_measurement(Resolution::High).await?;
+//!
+//! // The sensor's delay is used internally; for external delays,
+//! // you would need a separate delay provider.
+//!
+//! // Read measurement
+//! let lux = sensor.current_measurement_lux(Resolution::High).await?;
+//! # Ok(())
+//! # }
+//! # }
+//! ```
+//!
 use embedded_hal_async::delay::DelayNs;
 use embedded_hal_async::i2c::I2c;
 

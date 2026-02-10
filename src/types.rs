@@ -1,4 +1,91 @@
-//! Public configuration types.
+//! Public configuration types for the BH1750 driver.
+//!
+//! This module contains the core types used to configure and interact with
+//! the BH1750 sensor:
+//!
+//! - [`Address`] - I2C address selection based on the ADDR pin
+//! - [`Resolution`] - Measurement resolution and mode selection
+//! - [`MeasurementTime`] - Sensitivity adjustment via the MTreg register
+//!
+//! # Address Configuration
+//!
+//! The BH1750 can have one of two I2C addresses depending on the ADDR pin state:
+//!
+//! ```
+//! use bh1750_embedded::Address;
+//!
+//! // ADDR pin connected to GND (or floating)
+//! let addr_low = Address::Low;  // 0x23
+//!
+//! // ADDR pin connected to VCC
+//! let addr_high = Address::High; // 0x5C
+//!
+//! // Custom address (for unusual configurations)
+//! let addr_custom = Address::Custom(0x24);
+//! ```
+//!
+//! # Resolution Modes
+//!
+//! The sensor provides three resolution modes with different accuracy
+//! and measurement times:
+//!
+//! ```
+//! use bh1750_embedded::Resolution;
+//!
+//! // High resolution mode: 1 lx resolution, ~120ms measurement time
+//! let high = Resolution::High;
+//!
+//! // High resolution mode 2: 0.5 lx resolution, ~120ms measurement time
+//! let high2 = Resolution::High2;
+//!
+//! // Low resolution mode: 4 lx resolution, ~16ms measurement time (faster)
+//! let low = Resolution::Low;
+//! ```
+//!
+//! # Measurement Time (MTreg)
+//!
+//! The MTreg register (31..=254) adjusts the sensor's sensitivity and
+//! measurement time. Higher values increase sensitivity for low-light
+//! conditions, while lower values reduce sensitivity for bright conditions.
+//!
+//! ```
+//! use bh1750_embedded::MeasurementTime;
+//!
+//! // Default value (69)
+//! let default_mt = MeasurementTime::DEFAULT;
+//!
+//! // High sensitivity for low light (254)
+//! let high_sensitivity = MeasurementTime::new(254).unwrap();
+//!
+//! // Low sensitivity for bright light (31)
+//! let low_sensitivity = MeasurementTime::new(31).unwrap();
+//!
+//! // Values outside the range return None
+//! assert!(MeasurementTime::new(10).is_none());
+//! assert!(MeasurementTime::new(255).is_none());
+//! ```
+//!
+//! # Complete Example
+//!
+//! ```
+//! use bh1750_embedded::{Address, Bh1750, MeasurementTime, Resolution};
+//!
+//! # fn example<I2C, D, E>(i2c: I2C, delay: D) -> Result<(), bh1750_embedded::Error<E>>
+//! # where
+//! #     I2C: embedded_hal::i2c::I2c<Error = E>,
+//! #     D: embedded_hal::delay::DelayNs,
+//! #     E: embedded_hal::i2c::Error,
+//! # {
+//! let mut sensor = Bh1750::new(i2c, delay, Address::Low);
+//!
+//! // Configure for low-light conditions
+//! sensor.set_measurement_time(MeasurementTime::new(200).unwrap())?;
+//!
+//! // Use high resolution for maximum accuracy
+//! let lux = sensor.one_time_measurement(Resolution::High2)?;
+//! # Ok(())
+//! # }
+//! ```
 
 /// I2C address selection for the BH1750.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -94,5 +181,17 @@ impl MeasurementTime {
     #[must_use]
     pub const fn value(self) -> u8 {
         self.0
+    }
+}
+
+impl From<MeasurementTime> for u8 {
+    fn from(mt: MeasurementTime) -> Self {
+        mt.value()
+    }
+}
+
+impl From<u8> for MeasurementTime {
+    fn from(value: u8) -> Self {
+        Self::new(value).expect("MeasurementTime value out of range")
     }
 }

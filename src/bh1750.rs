@@ -1,3 +1,82 @@
+//! Blocking driver implementation for the BH1750 ambient light sensor.
+//!
+//! This module provides the main [`Bh1750`] driver for synchronous/blocking
+//! I2C communication. The driver supports:
+//!
+//! - One-time measurements (automatic power management)
+//! - Continuous measurements (user-managed)
+//! - Adjustable measurement time (MTreg) for sensitivity tuning
+//! - Three resolution modes: High, High2, and Low
+//!
+//! # Example: One-time Measurement
+//!
+//! ```
+//! use bh1750_embedded::{Address, Bh1750, Resolution};
+//!
+//! # fn example<I2C, D, E>(i2c: I2C, delay: D) -> Result<(), bh1750_embedded::Error<E>>
+//! # where
+//! #     I2C: embedded_hal::i2c::I2c<Error = E>,
+//! #     D: embedded_hal::delay::DelayNs,
+//! #     E: embedded_hal::i2c::Error,
+//! # {
+//! let mut sensor = Bh1750::new(i2c, delay, Address::Low);
+//!
+//! // The driver automatically waits for the measurement to complete
+//! let lux = sensor.one_time_measurement(Resolution::High)?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # Example: Continuous Measurement Mode
+//!
+//! ```
+//! use bh1750_embedded::{Address, Bh1750, Resolution};
+//! use embedded_hal::delay::DelayNs;
+//!
+//! # fn example<I2C, D, E>(i2c: I2C, delay: D) -> Result<(), bh1750_embedded::Error<E>>
+//! # where
+//! #     I2C: embedded_hal::i2c::I2c<Error = E>,
+//! #     D: embedded_hal::delay::DelayNs,
+//! #     E: embedded_hal::i2c::Error,
+//! # {
+//! let mut sensor = Bh1750::new(i2c, delay, Address::Low);
+//!
+//! // Start continuous measurement
+//! sensor.start_continuous_measurement(Resolution::High)?;
+//!
+//! // Wait for at least one measurement to complete
+//! let wait_ms = sensor.typical_measurement_time_ms(Resolution::High);
+//! # let mut delay_instance = embedded_hal_mock::eh1::delay::NoopDelay::new();
+//! # DelayNs::delay_ms(&mut delay_instance, wait_ms);
+//!
+//! // Read the current measurement
+//! let lux = sensor.current_measurement_lux(Resolution::High)?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # Example: Adjusting Sensitivity with MTreg
+//!
+//! ```
+//! use bh1750_embedded::{Address, Bh1750, MeasurementTime, Resolution};
+//!
+//! # fn example<I2C, D, E>(i2c: I2C, delay: D) -> Result<(), bh1750_embedded::Error<E>>
+//! # where
+//! #     I2C: embedded_hal::i2c::I2c<Error = E>,
+//! #     D: embedded_hal::delay::DelayNs,
+//! #     E: embedded_hal::i2c::Error,
+//! # {
+//! let mut sensor = Bh1750::new(i2c, delay, Address::Low);
+//!
+//! // Increase sensitivity for low-light conditions
+//! let high_sensitivity = MeasurementTime::new(254).unwrap();
+//! sensor.set_measurement_time(high_sensitivity)?;
+//!
+//! let lux = sensor.one_time_measurement(Resolution::High)?;
+//! # Ok(())
+//! # }
+//! ```
+
 use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 
