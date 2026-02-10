@@ -19,8 +19,8 @@ This implementation is a clean reimplementation based on the existing Rust crate
 ```rust,ignore
 use bh1750_embedded::{Bh1750, Resolution};
 
-# let i2c = todo!("provide an embedded-hal I2C implementation");
-# let delay = todo!("provide an embedded-hal DelayNs implementation");
+// let i2c = todo!("provide an embedded-hal I2C implementation");
+// let delay = todo!("provide an embedded-hal DelayNs implementation");
 
 let mut sensor = Bh1750::new(i2c, delay, bh1750_embedded::Address::Low);
 
@@ -41,8 +41,8 @@ bh1750-embedded = { version = "0.1", features = ["async"] }
 use bh1750_embedded::r#async::Bh1750Async;
 use bh1750_embedded::Resolution;
 
-# let i2c = todo!("provide an embedded-hal-async I2C implementation");
-# let delay = todo!("provide an embedded-hal-async DelayNs implementation");
+// let i2c = todo!("provide an embedded-hal-async I2C implementation");
+// let delay = todo!("provide an embedded-hal-async DelayNs implementation");
 
 let mut sensor = Bh1750Async::new(i2c, delay, bh1750_embedded::Address::Low);
 
